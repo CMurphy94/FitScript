@@ -6,6 +6,18 @@ body {
     background-color: black;
 }
 
+.jumbotron {
+    background-size: cover;
+}
+
+.jumbo-header {
+    color: gold;
+}
+
+.jumbo-text {
+    color: white;
+}
+
 h1, h2 {
     color: gold;
 }
