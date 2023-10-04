@@ -2,6 +2,8 @@ import http.server
 import socketserver
 import urllib.parse
 import hashlib
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
 
 users = {}
 
@@ -47,3 +49,8 @@ if __name__ == '__main__':
     with socketserver.TCPServer(("", PORT), UserAuthHandler) as httpd:
         print("Server started at port", PORT)
         httpd.serve_forever()
+
+engine = create_engine('sqllite:///fitscript_database.db')
+
+Session = sessionmaker(bind=engine)
+session = Session()
