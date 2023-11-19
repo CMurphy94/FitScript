@@ -2,19 +2,54 @@ import hashlib
 from sqlalchemy import create_engine, Column, String, Integer
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.exc import IntegrityError
+
+engine = create_engine('sqlite:///fitscript_database.db')
+
+Session = sessionmaker(bind=engine)
+
+Base = declarative_base()
+
+class User(Base):
+    __tablename__ = 'users'
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    name = Column(String, nullable=False)
+    email = Column(String, unique=True, nullable=False)
+    password = Column(String, nullable=False)
+
+Base.metadata.create_all(engine)
+
+def hash_password(password):
+    return hashlib.sha256(password.encode()).hexdigest()
 
 def register_user(name, email, password):
-    if email in users:
-        return False # User already exists
-    hashed_password = hashlib.md5(password.encode()).hexdigest()
-    users[email] = {'name': name, 'password': hashed_password}
-    return True
+    with Session() as session:
+        try:
+            existing_user = session.query(User).filter_by(email=email).first()
+            if existing_user:
+                return False
+
+            hashed_password = hash_password(password)
+
+            new_user = User(name=name, email=email, password=hashed_password)
+
+            session.add(new_user)
+            session.commit()
+
+            return True
+        except IntegrityError
+            return False
 
 def login_user(email, password):
-    if email in users:
-        hashed_password = hashlib.md5(password.encode()).hexdigest()
-        if users[email]['password'] == hashed_password:
-             return users[email]['name']
+    with Session() as session:
+        user = session.query(User).filter_by(email=email).first()
+
+        if user:
+            hashed_password = hash_password(password)
+            if user.password == hashed_password:
+                return user.name
+
     return None
 
 while True:
@@ -46,45 +81,4 @@ while True:
         break
 
     else:
-        print("Invalid choice. Please choose again.")   
-
-engine = create_engine('sqllite:///fitscript_database.db')
-
-Session = sessionmaker(bind=engine)
-session = Session()
-
-Base = declarative_base()
-
-class User(Base):
-    __tablename__ = 'users'
-
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    name = Column(String)
-    email = Column(String, unique=True)
-    password = Column(String)
-
-Base.metadata.create_all(engine)
-
-def register_user(name, email, password):
-    existing_user = session.query(User).filter_by(email=email).first()
-    if existing_user:
-        return False
-
-    hashed_password = hashlib.md5(password.encode()).hexdigest()
-
-    new_user = User(name=name, email=email, password=hashed_password)
-
-    session.add(new_user)
-    session.commit()
-
-    return True
-
-def login_user(email, password):
-    user = session.query(User).filter_by(email=email).first()
-
-    if user:
-        hashed_password = hashlib.md5(password.encode()).hexdigest()
-        if user.password == hashed_password:
-            return user.name
-
-    return None
+        print("Invalid choice. Please choose again.")
